@@ -1,5 +1,6 @@
 ---
 import Header from "../components/Header.astro";
+import { withBase } from "../lib/paths";
 import "../styles/global.css";
 
 interface Props {
@@ -23,17 +24,17 @@ const {
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href={withBase("/favicon.svg")} type="image/svg+xml" />
     <link
       rel="preload"
-      href="/fonts/Lancelot.ttf"
+      href={withBase("/fonts/Lancelot.ttf")}
       as="font"
       type="font/ttf"
       crossorigin
     />
     <link
       rel="preload"
-      href="/fonts/QuattrocentoSans-Regular.ttf"
+      href={withBase("/fonts/QuattrocentoSans-Regular.ttf")}
       as="font"
       type="font/ttf"
       crossorigin

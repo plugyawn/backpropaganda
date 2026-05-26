@@ -1,5 +1,6 @@
 ---
 import Logo from "./Logo.astro";
+import { stripBase, withBase } from "../lib/paths";
 
 const nav = [
   { href: "/about/", label: "About", index: "1" },
@@ -7,9 +8,8 @@ const nav = [
   { href: "/join/", label: "Join", index: "3" }
 ];
 
-const currentPath = Astro.url.pathname.endsWith("/")
-  ? Astro.url.pathname
-  : `${Astro.url.pathname}/`;
+const pathname = stripBase(Astro.url.pathname);
+const currentPath = pathname.endsWith("/") ? pathname : `${pathname}/`;
 const navPath = currentPath === "/" ? "/about/" : currentPath;
 ---
 
@@ -21,7 +21,7 @@ const navPath = currentPath === "/" ? "/about/" : currentPath;
       nav.map((item) => (
         <a
           class:list={{ active: navPath === item.href }}
-          href={item.href}
+          href={withBase(item.href)}
           aria-current={navPath === item.href ? "page" : undefined}
         >
           {item.label}<sup>({item.index})</sup>
@@ -40,7 +40,7 @@ const navPath = currentPath === "/" ? "/about/" : currentPath;
         nav.map((item) => (
           <a
             class:list={{ active: navPath === item.href }}
-            href={item.href}
+            href={withBase(item.href)}
             aria-current={navPath === item.href ? "page" : undefined}
           >
             {item.label}<sup>({item.index})</sup>

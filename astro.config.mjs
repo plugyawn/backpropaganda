@@ -2,5 +2,6 @@ import { defineConfig } from "astro/config";
 
 export default defineConfig({
   output: "static",
-  site: "https://backpropaganda.local"
+  site: "https://plugyawn.github.io",
+  base: "/backpropaganda"
 });
