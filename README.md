@@ -2,7 +2,7 @@
 
 Static Astro site for Backpropaganda, deployed with GitHub Pages.
 
-Live site: <https://plugyawn.github.io/backpropaganda/>
+Live site: <https://backpropaganda.net/>
 
 ## Local Development
 
