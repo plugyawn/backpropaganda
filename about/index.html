@@ -1,0 +1,217 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Our mission is to understand learning systems from the gradient up | Backpropaganda</title><meta name="description" content="A concise markdown-backed mission page for Backpropaganda."><meta name="generator" content="Astro v6.3.7"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="preload" href="/fonts/Lancelot.ttf" as="font" type="font/ttf" crossorigin><link rel="preload" href="/fonts/QuattrocentoSans-Regular.ttf" as="font" type="font/ttf" crossorigin><link rel="stylesheet" href="/_astro/BaseLayout.C1D2207c.css"></head> <body class> <header class="site-header"> <a class="logo" href="/" aria-label="Backpropaganda home"> <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"> <path d="M6 16c8-7 16 7 24 0s16-7 28 0"></path> <path d="M6 32c8-7 16 7 24 0s16-7 28 0"></path> <path d="M6 48c8-7 16 7 24 0s16-7 28 0"></path> </svg> <span class="logo-text">Backpropaganda</span> </a> <nav class="desktop-nav" aria-label="Primary navigation"> <a class="active" href="/about/" aria-current="page"> About<sup>(1)</sup> </a><a href="/research/"> Research<sup>(2)</sup> </a><a href="/join/"> Join<sup>(3)</sup> </a> </nav> <details class="mobile-nav"> <summary aria-label="Open navigation"> <span></span> <span></span> </summary> <nav aria-label="Mobile navigation"> <a class="active" href="/about/" aria-current="page"> About<sup>(1)</sup> </a><a href="/research/"> Research<sup>(2)</sup> </a><a href="/join/"> Join<sup>(3)</sup> </a> </nav> </details> </header> <main>  <section class="text-page text-page--about"> <div class="dot-grid" aria-hidden="true"></div> <div class="shader-field" aria-hidden="true"> <canvas data-dendrite-shader></canvas> </div> <script>
+  (() => {
+    const canvases = document.querySelectorAll("[data-dendrite-shader]");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const vertexSource = `
+      attribute vec2 position;
+      varying vec2 vUv;
+      void main() {
+        vUv = position * 0.5 + 0.5;
+        gl_Position = vec4(position, 0.0, 1.0);
+      }
+    `;
+
+    const fragmentSource = `
+      precision mediump float;
+
+      varying vec2 vUv;
+      uniform vec2 resolution;
+      uniform float time;
+
+      mat2 rot(float a) {
+        float s = sin(a);
+        float c = cos(a);
+        return mat2(c, -s, s, c);
+      }
+
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+      }
+
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(
+          mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
+          mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+          u.y
+        );
+      }
+
+      float waveBand(float phase, float width) {
+        float crest = abs(sin(phase));
+        return smoothstep(1.0 - width, 1.0, crest);
+      }
+
+      void main() {
+        vec2 pixelGrid = vec2(150.0, 92.0);
+        vec2 uv = (floor(vUv * pixelGrid) + 0.5) / pixelGrid;
+        float t = time;
+
+        float right = smoothstep(0.05, 0.96, uv.x);
+        float ripple = right * right;
+        float waveEnergy = mix(0.48, 1.0, right);
+        float midEnergy = mix(0.24, 1.0, smoothstep(0.08, 0.82, right));
+        float fineEnergy = mix(0.06, 0.72, smoothstep(0.34, 1.0, right));
+        float localA = noise(uv * vec2(2.4, 1.7) + vec2(2.8, 6.1));
+        float localB = noise(uv * vec2(3.1, 2.2) + vec2(11.4, 1.9));
+        float localC = noise(uv * vec2(3.0, 4.0) + vec2(t * 0.025, -t * 0.018));
+
+        float leftWeight = 1.0 - smoothstep(0.02, 0.58, uv.x);
+        float driftA = noise(vec2(uv.x * 18.0 - t * 0.78, uv.y * 23.0 + sin(t * 0.16 + uv.x * 4.0)));
+        float driftB = noise(vec2(uv.x * 43.0 - t * 1.34 + localA * 2.0, uv.y * 37.0 + t * 0.15));
+        float frontNoise = noise(vec2(uv.y * 5.4 + t * 0.23, uv.y * 2.2 - t * 0.17));
+        float advectedNoise = smoothstep(0.48, 0.68, driftA * 0.62 + driftB * 0.38);
+
+        float cycle = fract(t * 0.12);
+        float frontX = cycle * 1.32 - 0.18;
+        float breakZone = smoothstep(0.26, 0.48, uv.x)
+          * (1.0 - smoothstep(0.72, 0.92, uv.x))
+          * smoothstep(0.32, 0.5, frontX)
+          * (1.0 - smoothstep(0.74, 0.94, frontX));
+        float frontWarp = 0.105 * sin(uv.y * 5.0 + t * 0.54)
+          + 0.052 * sin(uv.y * 12.0 + localB * 6.0)
+          + 0.034 * (frontNoise - 0.5)
+          + 0.025 * sin(uv.x * 19.0 + uv.y * 13.0 + t * 0.31);
+        float frontDistance = abs(uv.x - frontX - frontWarp);
+        float front = smoothstep(0.2 + 0.05 * right, 0.0, frontDistance);
+        float wakeDistance = frontX + frontWarp - uv.x;
+        float wake = smoothstep(0.48, 0.0, wakeDistance) * smoothstep(0.0, 0.08, wakeDistance);
+        float pulseVisible = smoothstep(-0.08, 0.06, frontX) * (1.0 - smoothstep(1.02, 1.18, frontX));
+        float breakNoise = smoothstep(0.34, 0.72, noise(vec2(uv.x * 31.0 - t * 1.9, uv.y * 46.0 + t * 0.42)));
+        float breakMask = mix(0.38, 1.0, breakNoise);
+        float riptide = (front * 0.7 + wake * 0.22) * breakMask * pulseVisible * breakZone;
+
+        float bend = 0.11 * sin(uv.x * 5.5 + t * 0.18 + localA * 6.283);
+        bend += 0.06 * sin(uv.x * 13.0 - t * 0.12 + localB * 4.0);
+        bend += 0.04 * sin((uv.x - t * 0.05) * 28.0 + driftA * 3.0) * right;
+        float flowY = uv.y + bend + 0.05 * (localC - 0.5) + riptide * 0.045;
+
+        float baseFreq = mix(5.4, 15.5, ripple);
+        float localFreq = baseFreq * mix(0.86, 1.28, localA);
+        float width = (mix(0.13, 0.23, right) + riptide * 0.11) * mix(0.82, 1.18, localB);
+        float speed = mix(0.18, 0.55, ripple) * mix(0.8, 1.3, localC);
+
+        float phaseA = flowY * localFreq + uv.x * mix(8.0, 22.0, right) + t * speed + localA * 5.0;
+        float phaseB = (flowY + 0.14 * sin(uv.x * 7.0 + localB)) * (localFreq * 1.75)
+          - uv.x * mix(8.0, 34.0, right) - t * speed * 0.68 + localB * 8.0;
+        float phaseC = (flowY + 0.08 * sin(uv.x * 19.0 - t * 0.16)) * (localFreq * 2.6)
+          + uv.x * mix(13.0, 48.0, right) + t * speed * 0.42;
+
+        float broad = waveBand(phaseA, width);
+        float mid = waveBand(phaseB, width * 0.78) * midEnergy;
+        float fine = waveBand(phaseC, width * 0.52) * fineEnergy;
+
+        float foamNoise = smoothstep(0.5, 0.72, noise(uv * vec2(48.0, 34.0) + vec2(t * 0.20, -t * 0.12)));
+        float foam = foamNoise * (broad * 0.35 + mid * 0.32 + fine * 0.2 + riptide * 0.54) * smoothstep(0.18, 1.0, right);
+
+        float field = advectedNoise * mix(0.24 + leftWeight * 0.03, 0.08, right);
+        field += broad * 0.23 * waveEnergy + mid * 0.23 + fine * 0.13 + foam * 0.42;
+        field += riptide * (broad * 0.34 + mid * 0.2 + foamNoise * 0.1) * mix(0.3, 0.42, right);
+        field += wake * advectedNoise * mix(0.16, 0.08, right);
+        field = clamp(field, 0.0, 1.0);
+        field = floor(field * 4.0) / 4.0;
+
+        vec3 slate = vec3(0.13, 0.14, 0.15);
+        vec3 plum = vec3(0.19, 0.16, 0.22);
+        vec3 ochre = vec3(0.38, 0.31, 0.20);
+        vec3 color = mix(slate, plum, localC);
+        color = mix(color, ochre, foamNoise * smoothstep(0.56, 1.0, right));
+        color = floor(color * 6.0) / 6.0;
+
+        float alphaRamp = (1.0 - exp(-7.5 * uv.x)) / (1.0 - exp(-7.5 * 0.5));
+        alphaRamp = clamp(alphaRamp, 0.0, 1.0);
+        gl_FragColor = vec4(color, field * 0.58 * alphaRamp);
+      }
+    `;
+
+    function compile(gl, type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    function init(canvas) {
+      const gl =
+        canvas.getContext("webgl", {
+          alpha: true,
+          antialias: false,
+          depth: false,
+          stencil: false,
+          powerPreference: "low-power"
+        }) || canvas.getContext("experimental-webgl");
+
+      if (!gl) return;
+
+      const vertex = compile(gl, gl.VERTEX_SHADER, vertexSource);
+      const fragment = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);
+      if (!vertex || !fragment) return;
+
+      const program = gl.createProgram();
+      gl.attachShader(program, vertex);
+      gl.attachShader(program, fragment);
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+        gl.STATIC_DRAW
+      );
+
+      const position = gl.getAttribLocation(program, "position");
+      const resolution = gl.getUniformLocation(program, "resolution");
+      const time = gl.getUniformLocation(program, "time");
+      let frame = 0;
+      let start = performance.now();
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const width = Math.max(96, Math.floor(rect.width * 0.16));
+        const height = Math.max(72, Math.floor(rect.height * 0.16));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+          gl.viewport(0, 0, width, height);
+        }
+      }
+
+      function render(now) {
+        resize();
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.useProgram(program);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.enableVertexAttribArray(position);
+        gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+        gl.uniform2f(resolution, canvas.width, canvas.height);
+        gl.uniform1f(time, (now - start) / 1000);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        if (!reduceMotion.matches) {
+          frame = requestAnimationFrame(render);
+        }
+      }
+
+      render(start);
+      reduceMotion.addEventListener("change", () => {
+        cancelAnimationFrame(frame);
+        start = performance.now();
+        render(start);
+      });
+    }
+
+    canvases.forEach(init);
+  })();
+</script> <div class="dot-corner dot-corner--top-left" aria-hidden="true"></div> <div class="dot-corner dot-corner--top-right" aria-hidden="true"></div> <div class="dot-corner dot-corner--bottom-left" aria-hidden="true"></div> <div class="dot-corner dot-corner--bottom-right" aria-hidden="true"></div> <article class="text-panel markdown-copy"> <h1>Our mission is to understand learning systems from the gradient up</h1>  <p>Modern models compress traces of the world into weights, activations, caches, and training histories. They are useful before they are fully understood, and that gap is where our work starts.</p>
+<p>We focus on concrete mechanisms: what circuits form, which optimizers amplify them, where architecture choices help, and how to make the resulting behavior inspectable without slowing down iteration.</p>
+<p>The goal is not only better explanations. It is better research taste: sharper hypotheses, cleaner experiments, and infrastructure that makes the next question easier to ask.</p>  </article> </section>  </main> </body></html>
