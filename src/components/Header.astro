@@ -1,0 +1,52 @@
+---
+import Logo from "./Logo.astro";
+
+const nav = [
+  { href: "/about/", label: "About", index: "1" },
+  { href: "/research/", label: "Research", index: "2" },
+  { href: "/join/", label: "Join", index: "3" }
+];
+
+const currentPath = Astro.url.pathname.endsWith("/")
+  ? Astro.url.pathname
+  : `${Astro.url.pathname}/`;
+const navPath = currentPath === "/" ? "/about/" : currentPath;
+---
+
+<header class="site-header">
+  <Logo />
+
+  <nav class="desktop-nav" aria-label="Primary navigation">
+    {
+      nav.map((item) => (
+        <a
+          class:list={{ active: navPath === item.href }}
+          href={item.href}
+          aria-current={navPath === item.href ? "page" : undefined}
+        >
+          {item.label}<sup>({item.index})</sup>
+        </a>
+      ))
+    }
+  </nav>
+
+  <details class="mobile-nav">
+    <summary aria-label="Open navigation">
+      <span></span>
+      <span></span>
+    </summary>
+    <nav aria-label="Mobile navigation">
+      {
+        nav.map((item) => (
+          <a
+            class:list={{ active: navPath === item.href }}
+            href={item.href}
+            aria-current={navPath === item.href ? "page" : undefined}
+          >
+            {item.label}<sup>({item.index})</sup>
+          </a>
+        ))
+      }
+    </nav>
+  </details>
+</header>
