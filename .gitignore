@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output and generated Astro metadata
+dist/
+.astro/
+
+# Local verification artifacts
+output/
+.playwright-cli/
+
+# Environment and editor state
+.env
+.env.*
+!.env.example
+.DS_Store
