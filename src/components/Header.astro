@@ -3,9 +3,8 @@ import Logo from "./Logo.astro";
 import { stripBase, withBase } from "../lib/paths";
 
 const nav = [
-  { href: "/about/", label: "About", index: "1" },
-  { href: "/research/", label: "Research", index: "2" },
-  { href: "/join/", label: "Join", index: "3" }
+  { href: "/about/", label: "About" },
+  { href: "/join/", label: "Join" }
 ];
 
 const pathname = stripBase(Astro.url.pathname);
@@ -24,7 +23,7 @@ const navPath = currentPath === "/" ? "/about/" : currentPath;
           href={withBase(item.href)}
           aria-current={navPath === item.href ? "page" : undefined}
         >
-          {item.label}<sup>({item.index})</sup>
+          {item.label}
         </a>
       ))
     }
@@ -43,7 +42,7 @@ const navPath = currentPath === "/" ? "/about/" : currentPath;
             href={withBase(item.href)}
             aria-current={navPath === item.href ? "page" : undefined}
           >
-            {item.label}<sup>({item.index})</sup>
+            {item.label}
           </a>
         ))
       }

@@ -19,27 +19,4 @@ const pages = defineCollection({
   })
 });
 
-const blog = defineCollection({
-  loader: glob({ pattern: "**/*.md", base: "./src/content/blog" }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    category: z.string(),
-    date: z.coerce.date(),
-    displayDate: z.string(),
-    visual: z.enum([
-      "aurora",
-      "brew",
-      "mesh",
-      "lattice",
-      "curve",
-      "signal",
-      "vault",
-      "sieve",
-      "rate"
-    ]),
-    draft: z.boolean().optional()
-  })
-});
-
-export const collections = { pages, blog };
+export const collections = { pages };

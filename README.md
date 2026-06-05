@@ -23,7 +23,6 @@ Most site copy is Markdown-backed:
 
 - `src/content/pages/about.md` controls the front page and `/about/`.
 - `src/content/pages/join.md` controls `/join/`, including open roles in frontmatter.
-- `src/content/blog/*.md` controls the research index and individual blog posts.
 
 Site chrome and visuals are code-backed:
 
