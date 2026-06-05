@@ -22,7 +22,6 @@ npm run build
 Most site copy is Markdown-backed:
 
 - `src/content/pages/about.md` controls the front page and `/about/`.
-- `src/content/pages/join.md` controls `/join/`, including open roles in frontmatter.
 
 Site chrome and visuals are code-backed:
 
